@@ -1,0 +1,584 @@
+{
+  "name": "Get Chat ID Telegram (FDP)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4e152a84-5a6e-4b21-98d2-17cc968c3a00",
+      "name": "Telegram Trigger",
+      "webhookId": "afc03703-59a8-40e0-8200-46969387a415",
+      "credentials": {
+        "telegramApi": {
+          "id": "FcDrn6pbxXWic60h",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg",
+          "mode": "list",
+          "cachedResultName": "List Telegram User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "List",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Chat ID": "={{ $json['Chat ID'] }}",
+            "Username": "={{ $json.Username }}",
+            "First Name": "={{ $json['First Name'] }}",
+            "Last Name": "={{ $json['Last Name'] }}",
+            "Date": "={{ $json.Date }}"
+          },
+          "matchingColumns": [
+            "Chat ID"
+          ],
+          "schema": [
+            {
+              "id": "Chat ID",
+              "displayName": "Chat ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Username",
+              "displayName": "Username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Name",
+              "displayName": "Last Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        848,
+        -128
+      ],
+      "id": "7b7dfd0a-3b60-4f3b-a379-7595a3b12354",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VhdNTkJgOxF1ZVNV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0299dbbf-72ea-44c1-a6f7-d5712c8eb2f6",
+              "name": "Chat ID",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "number"
+            },
+            {
+              "id": "a07e14ac-1c5a-417b-9a40-3fee8c2ff1b0",
+              "name": "Username",
+              "value": "={{ $json.message.chat.username }}",
+              "type": "string"
+            },
+            {
+              "id": "88c16a59-eee4-4234-a441-75d41d45cdc4",
+              "name": "First Name",
+              "value": "={{ $json.message.chat.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "cf0d4ffe-5e77-455e-8d0a-bc4a7a1af84f",
+              "name": "Last Name",
+              "value": "={{ $json.message.chat.last_name }}",
+              "type": "string"
+            },
+            {
+              "id": "ea60f6c6-bd97-4d30-bd5f-02f53819c660",
+              "name": "Date",
+              "value": "={{ $json.message.date.toDateTime('s') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        -128
+      ],
+      "id": "cab026b1-9f8f-4dc1-825e-e80899633f9f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f8550a73-fb41-49b9-b3c4-fc5336ad169b",
+              "leftValue": "={{ $json.message.entities[0].type }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "58b64e66-c628-490e-968c-5fb406c45b4e",
+      "name": "If text is command"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cf5e6b4a-4116-4c81-bb80-602586b9bcb6",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "/getdailyhousingpicks",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        464,
+        0
+      ],
+      "id": "6b5f6eec-09a8-44d4-b396-eb3107de4d00",
+      "name": "If subscribing"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg",
+          "mode": "list",
+          "cachedResultName": "List Telegram User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "List",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Chat ID",
+              "lookupValue": "={{ $json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        80
+      ],
+      "id": "4b118f04-d39b-4bcb-a782-71a746a1de79",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VhdNTkJgOxF1ZVNV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg",
+          "mode": "list",
+          "cachedResultName": "List Telegram User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "List",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit#gid=0"
+        },
+        "startIndex": "={{ $json.row_number }}"
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1072,
+        80
+      ],
+      "id": "cced9abd-0ccc-4556-b666-37ad530d253f",
+      "name": "Delete rows or columns from sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VhdNTkJgOxF1ZVNV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7fe8b82e-c71e-4ed4-8dab-d04f8c582f12",
+              "leftValue": "={{ $json['Chat ID'] }}",
+              "rightValue": "={{ $('If subscribing').item.json.message.chat.id }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        80
+      ],
+      "id": "12706899-0eba-451c-982e-616b3ed54041",
+      "name": "If already subscribe",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "To get the daily housing picks please type /getdailyhousingpicks",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        192
+      ],
+      "id": "23e07de7-008e-45b1-9986-d0913f1131d9",
+      "name": "Send instruction",
+      "webhookId": "648bd04d-a211-40e5-a9df-3a42a2786f85",
+      "credentials": {
+        "telegramApi": {
+          "id": "FcDrn6pbxXWic60h",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json['Chat ID'] }}",
+        "text": "You have subscribed to get the daily picks. The next suggestion picks will be sent tomorrow",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1072,
+        -128
+      ],
+      "id": "75686bee-fef0-44e6-889c-a00f9a23f303",
+      "name": "Send you have sub",
+      "webhookId": "cc7965f8-faf5-462d-aa2a-aec882177279",
+      "credentials": {
+        "telegramApi": {
+          "id": "FcDrn6pbxXWic60h",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('If subscribing').item.json.message.chat.id }}",
+        "text": "You have not subscribed yet",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        304
+      ],
+      "id": "869dd7dd-971a-49b1-b87a-71137672e173",
+      "name": "Send you have not sub",
+      "webhookId": "c473b0aa-3a5f-4489-b48a-222ee0a7d401",
+      "credentials": {
+        "telegramApi": {
+          "id": "FcDrn6pbxXWic60h",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('If subscribing').item.json.message.chat.id }}",
+        "text": "You have been removed from the list",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        80
+      ],
+      "id": "54a6230d-2796-4a61-8a04-6c97acb77494",
+      "name": "Send you have been removed",
+      "webhookId": "7b052159-1ad3-481d-b008-afa99c2bca0b",
+      "credentials": {
+        "telegramApi": {
+          "id": "FcDrn6pbxXWic60h",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "If text is command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send you have sub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If text is command": {
+      "main": [
+        [
+          {
+            "node": "If subscribing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send instruction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If subscribing": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If already subscribe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If already subscribe": {
+      "main": [
+        [
+          {
+            "node": "Delete rows or columns from sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send you have not sub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send instruction": {
+      "main": [
+        []
+      ]
+    },
+    "Delete rows or columns from sheet": {
+      "main": [
+        [
+          {
+            "node": "Send you have been removed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "kppRNciy5y3LT6n0",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "fd7145b9-8fe0-4c12-84d0-18313711e8df",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "07ffabd755c275b67e1f5df2dea2381d993c8281e88441a61557732a2f1f3ff6"
+  },
+  "nodeGroups": [],
+  "id": "n571lZ3BqyY5Vvs2",
+  "tags": []
+}

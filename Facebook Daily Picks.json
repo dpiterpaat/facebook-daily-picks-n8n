@@ -1,0 +1,1482 @@
+{
+  "name": "Facebook Daily Picks",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -4096,
+        -144
+      ],
+      "id": "889c7044-20b2-453c-9de2-554c924537e1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "U5DUNxhH3qKt5PnCf",
+          "mode": "list",
+          "cachedResultName": "Facebook Marketplace Scraper (apify/facebook-marketplace-scraper)",
+          "cachedResultUrl": "https://console.apify.com/actors/U5DUNxhH3qKt5PnCf/input"
+        },
+        "customBody": "{\n  \"startUrls\": [\n    {\n      \"url\": \"https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000\"\n    }\n  ],\n  \"resultsLimit\": 10,\n  \"includeListingDetails\": false\n}",
+        "timeout": 500,
+        "memory": 4096
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        -3904,
+        -144
+      ],
+      "id": "3762d2e8-cc0e-4395-8901-770e8c704d2f",
+      "name": "Get Facebook Marketplace Listing",
+      "executeOnce": true,
+      "credentials": {
+        "apifyApi": {
+          "id": "Zai1xT2NODO3JCyC",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a4481257-d322-49bf-8d9d-3f1a3ebab79d",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "={{ \"is_empty\" }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3536,
+        -144
+      ],
+      "id": "c19538b1-8c8d-4ff7-b62a-cc873f165a78",
+      "name": "if there is id on item"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the new listing for today\n\n{{ $('Append to sheet').all().map(item => item.json).map(({photo_image_url,...item}) => item).toJsonString()}}\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert Swedish real estate assistant with deep knowledge of local housing markets, neighborhood pricing, and rental trends across Swedish cities.\n\nYou will be provided with one or more lists of housing listings scraped from Facebook Marketplace in JSON format. \n\nYour job is to carefully analyze each listing and perform the following steps:\n\n1. **Filter** out any commercial or non-residential spaces, such as listings containing words like \"lokal\", \"kontor\", or \"verksamhet\".\n\n2. **Scam Detection** — Flag any listings that appear suspicious based on:\n   - Unrealistically low prices for the area or property size\n   - Vague or unusual wording that doesn't match standard Swedish rental language\n- Sketchy image, like with watermarks, or very bad quality of photo\n   - Missing key details that legitimate listings typically include\n   - Example: A furnished 1-room apartment in central Helsingborg listed \n     at 1,500 SEK/month would be a red flag.\n\n3. **Analysis** — For the remaining legitimate listings, evaluate each one based on the image, price-to-value ratio, location desirability, room size, and suitability for a student lifestyle (proximity to universities, public transport, affordability).\n\n4. **Recommendation** — Pick the single best residential deal suited for a student and explain clearly why it stands out above the rest.\n\nAlways base your judgments on realistic Swedish market knowledge and pick only one that is a good deal for student, provide your reasoning in a same format as the JSON input. "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -2960,
+        -48
+      ],
+      "id": "52417a1b-0fdd-425e-ab8d-e1eb46612041",
+      "name": "AI Agent",
+      "executeOnce": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -2960,
+        144
+      ],
+      "id": "e3cb9804-604c-449f-9e1b-0a8b9beaac31",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "QK1aVHygB3M9sb3z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\"id\": \n\"1933995624175939\",\n\t\"marketplace_listing_title\": \"1 Room for Rent\",\n   \"listing_price\" : \"SEK3,650\",\n\t\"location\": \"Malmö, Sweden\",\n  \"listingUrl\": \"https://www.facebook.com/marketplace/item/1558983558638836\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -2816,
+        144
+      ],
+      "id": "4b7f8d8d-efff-4755-ad6a-bd8fd2ba4579",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "content": "There is a possibility that Apify get duplicated data\n\nif there is one duplicate, it's gonna be discarded\nif all of them is duplicate, all of them gonna be discarded but always output data settings will give empty item",
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3968,
+        -496
+      ],
+      "typeVersion": 1,
+      "id": "fa04c1d4-6b2d-4c05-9342-a9fed8189f7d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3dcd6b5a-ebcb-489d-a6b9-1cf4affb0aac",
+              "name": "photo_image_url",
+              "value": "={{ $json.different.primary_listing_photo.inputA.photo_image_url }}",
+              "type": "string"
+            },
+            {
+              "id": "1aa8e18d-9a82-452d-b883-8879c7552c77",
+              "name": "marketplace_listing_title",
+              "value": "={{ $json.different.marketplace_listing_title.inputA }}",
+              "type": "string"
+            },
+            {
+              "id": "c8a8a417-fa97-49a0-9a82-e0d7eda2a444",
+              "name": "listing_price",
+              "value": "={{ $json.different.listing_price.inputA.formatted_amount }}",
+              "type": "string"
+            },
+            {
+              "id": "64043274-ec66-4d5b-b982-dc8ee5d231c6",
+              "name": "location",
+              "value": "={{ $json.different.location.inputA.reverse_geocode.city_page.display_name }}",
+              "type": "string"
+            },
+            {
+              "id": "914f386f-3504-4066-817e-24a0749edef8",
+              "name": "listingUrl",
+              "value": "={{ $json.different.listingUrl.inputA }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2352,
+        -112
+      ],
+      "id": "06d5b73a-58fb-4b29-82f1-6f126e28a5a0",
+      "name": "Edit to message"
+    },
+    {
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        -3728,
+        -144
+      ],
+      "id": "8c5982bb-91b4-4ef6-a204-408ab82ee49b",
+      "name": "Remove Duplicates",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "936703195",
+        "file": "={{ $('Edit to message').item.json.photo_image_url }}",
+        "additionalFields": {
+          "caption": "=🎯 Today's Top Housing Picks\n\n🏠 {{ $('Edit to message').item.json.marketplace_listing_title }}\n📍 {{ $('Edit to message').item.json.location }}\n💰 {{ $('Edit to message').item.json.listing_price }}\n🔗 {{ $('Edit to message').item.json.listingUrl }}\n\nThe other new listing has been added to Google Sheet https://docs.google.com/spreadsheets/d/1Tx8FLYQzJ3BIFKSGwVGZNYkXIqveQlTmO_1ibvxzQjs"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2064,
+        112
+      ],
+      "id": "6d365fd4-7f09-4031-92bf-edc905be82de",
+      "name": "Send the top picks",
+      "webhookId": "66e6dc40-ee2a-4df7-a839-328b79923b09",
+      "credentials": {
+        "telegramApi": {
+          "id": "FcDrn6pbxXWic60h",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "id",
+              "field2": "output.id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.compareDatasets",
+      "typeVersion": 2.3,
+      "position": [
+        -2608,
+        -160
+      ],
+      "id": "1c271683-befa-4a49-a247-2b78b9792783",
+      "name": "Compare to get CDN"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -3888,
+        96
+      ],
+      "id": "e4e67c24-5567-40c8-8651-f59aa93f7fcc",
+      "name": "Loop Over Users"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5363b6ee-485b-4321-b439-ac2f98a3007d",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "f870d1a6-a8a5-4a4d-9af1-5f5eb1af4d32",
+              "name": "listingUrl",
+              "value": "={{ $json.listingUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "58d0e869-f9ca-452b-901c-3df056d6b19f",
+              "name": "photo_image_url",
+              "value": "={{ $json.primary_listing_photo.photo_image_url }}",
+              "type": "string"
+            },
+            {
+              "id": "f68926a6-998f-448e-9d97-14ffada99012",
+              "name": "listing_price",
+              "value": "={{ $json.listing_price.formatted_amount }}",
+              "type": "string"
+            },
+            {
+              "id": "71cfa1cc-329d-45a8-884d-1e945b19cd66",
+              "name": "marketplace_listing_title",
+              "value": "={{ $json.marketplace_listing_title }}",
+              "type": "string"
+            },
+            {
+              "id": "546392de-a416-4241-9983-8a0153c2378b",
+              "name": "location",
+              "value": "={{ $json.location.reverse_geocode.city_page.display_name }}",
+              "type": "string"
+            },
+            {
+              "id": "3464bd7b-e654-4bb9-9ee2-1026761fcd36",
+              "name": "Date Added",
+              "value": "={{ $('Schedule Trigger').item.json[\"Readable date\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "dotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3312,
+        -48
+      ],
+      "id": "e99a2df1-6122-48ac-87a4-94354abe57cb",
+      "name": "Edit to append to sheet"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Tx8FLYQzJ3BIFKSGwVGZNYkXIqveQlTmO_1ibvxzQjs",
+          "mode": "list",
+          "cachedResultName": "Facebook Marketplace Housing List",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tx8FLYQzJ3BIFKSGwVGZNYkXIqveQlTmO_1ibvxzQjs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1696071474,
+          "mode": "list",
+          "cachedResultName": "Housing List",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tx8FLYQzJ3BIFKSGwVGZNYkXIqveQlTmO_1ibvxzQjs/edit#gid=1696071474"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $json.marketplace_listing_title }}",
+            "Listing URL": "={{ $json.listingUrl }}",
+            "Price": "={{ $json.listing_price }}",
+            "Location": "={{ $json.location }}",
+            "Photo URL": "={{ $json.photo_image_url }}"
+          },
+          "matchingColumns": [
+            "Listing URL"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Price",
+              "displayName": "Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Photo URL",
+              "displayName": "Photo URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Listing URL",
+              "displayName": "Listing URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -3136,
+        -48
+      ],
+      "id": "7c984e02-5441-46e6-b235-be5c73b30b70",
+      "name": "Append to sheet",
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VhdNTkJgOxF1ZVNV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2432,
+        112
+      ],
+      "id": "1dd1cedb-0c33-4bb8-816a-7c85c89932da",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -2240,
+        112
+      ],
+      "id": "a93dbaac-d662-4b4b-ada6-c653183df3d1",
+      "name": "Wait",
+      "webhookId": "1739ccfd-3db6-40cc-a3a2-40133cabbb4d"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -3712,
+        96
+      ],
+      "id": "25556495-9e63-4217-aa9e-d1ab1bebbf36",
+      "name": "Wait 3 sec",
+      "webhookId": "8c10d8d2-38e0-4664-8cb7-475d4d62261a"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg",
+          "mode": "list",
+          "cachedResultName": "List Telegram User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "List",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -4096,
+        96
+      ],
+      "id": "7372b66d-38f6-4ad8-a9c2-865dbcebe28c",
+      "name": "Get user list",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VhdNTkJgOxF1ZVNV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json[\"Chat ID\"] }}",
+        "text": "Unfortunately, there is no new listing available",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3536,
+        96
+      ],
+      "id": "6cc4576b-ee80-4526-a7a9-d089e07496e7",
+      "name": "Send there is no new list",
+      "webhookId": "eb4fad05-fc2d-4943-b410-f684881429ee",
+      "credentials": {
+        "telegramApi": {
+          "id": "FcDrn6pbxXWic60h",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg",
+          "mode": "list",
+          "cachedResultName": "List Telegram User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "List",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yJCasprNDYkDqMsGqaTV-iETpppkONETZozijv7zJgg/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -2624,
+        112
+      ],
+      "id": "c96ade9a-48fd-4302-b106-8a046193b158",
+      "name": "Get user list1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VhdNTkJgOxF1ZVNV",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Get Facebook Marketplace Listing": [
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/26937395085925888",
+          "id": "26937395085925888",
+          "primary_listing_photo": {
+            "__typename": "CatalogMarketplaceEnhancementTransformedImage",
+            "id": "2126558908123919",
+            "photo_image_url": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.84726-6/701810665_2126558924790584_2540897482366219251_n.jpg?stp=c0.173.526.526a_dst-jpg_p526x395_tt6&_nc_cat=103&ccb=1-7&_nc_sid=92e707&_nc_ohc=0txvaLW3taIQ7kNvwFOu7SE&_nc_oc=AdrigJu-zJlpaEAC1B2B3gw5bZshuzTstl5fzbcMtkeI4CN1gHoNFcalqQk8O-QGvNU&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af-rp172QnyLXaTWqMUclSNp25Y1KRQHUR1phKgQ8nZYMA&oe=6A278F1F"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK4,500",
+            "amount_with_offset_in_currency": "47599",
+            "amount": "4500.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Malmö",
+              "state": "M",
+              "city_page": {
+                "display_name": "Malmö, Sweden",
+                "id": "110837332277562"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1583634935226685",
+          "marketplace_listing_title": "Matbord / svart matbord / ovalt matbord",
+          "custom_title": null,
+          "custom_sub_titles_with_rendering_flags": [],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/2267735374052843",
+          "id": "2267735374052843",
+          "primary_listing_photo": {
+            "__typename": "CatalogMarketplaceEnhancementTransformedImage",
+            "id": "858048383490063",
+            "photo_image_url": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.84726-6/710625500_858048396823395_6316226743651258303_n.jpg?stp=c210.0.540.540a_dst-jpg_p180x540_tt6&_nc_cat=103&ccb=1-7&_nc_sid=92e707&_nc_ohc=b4ew4RpsRkIQ7kNvwEgXSpt&_nc_oc=AdpBipn6JD4VPeeKD8UVMgBX_YgqqQzTChLYNGvPCgdoPOMzxaGbIBklkOrcus2nvNs&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af_2--DkNIJDY0xrQjN6EQIyZawZ0pTxMZW7RW-UxMYY4w&oe=6A277D65"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK7,684",
+            "amount_with_offset_in_currency": "81278",
+            "amount": "7684.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Trelleborg",
+              "state": "M",
+              "city_page": {
+                "display_name": "Trelleborg, Sweden",
+                "id": "115703165111294"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1468271819871448",
+          "marketplace_listing_title": "1 sovrum 1 badrum Lägenhet",
+          "custom_title": "1 bed · 1 bath",
+          "custom_sub_titles_with_rendering_flags": [
+            {
+              "subtitle": "Per Hans väg 4B"
+            },
+            {
+              "subtitle": "Trelleborg, M"
+            }
+          ],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/1010581138087166",
+          "id": "1010581138087166",
+          "primary_listing_photo": {
+            "__typename": "CatalogMarketplaceEnhancementTransformedImage",
+            "id": "1884275302419360",
+            "photo_image_url": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.84726-6/703720320_1884275315752692_2913245431974402440_n.jpg?stp=c0.87.526.526a_dst-jpg_p526x395_tt6&_nc_cat=104&ccb=1-7&_nc_sid=92e707&_nc_ohc=_L8tEViBR4QQ7kNvwHBh95U&_nc_oc=Adp2NWMepSzFXu_hNL-NQGJQs1LJYbK3m0yaySvruiJY7QT2BV22xd_PuO7n3_8VthY&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af-lXCKAVwJdNHIAl8mqTQxEH63O51NE46XiH2H8jsBc5A&oe=6A27942B"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK5,000",
+            "amount_with_offset_in_currency": "52888",
+            "amount": "5000.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Lund",
+              "state": "M",
+              "city_page": {
+                "display_name": "Lund, Sweden",
+                "id": "108679122496232"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1468271819871448",
+          "marketplace_listing_title": "bostad / rum med egen ingång o eget badrum",
+          "custom_title": "bostad / rum med egen ingång o eget badrum",
+          "custom_sub_titles_with_rendering_flags": [
+            {
+              "subtitle": "Lund, M"
+            }
+          ],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/2667936846924167",
+          "id": "2667936846924167",
+          "primary_listing_photo": {
+            "__typename": "CatalogMarketplaceEnhancementTransformedImage",
+            "id": "1542942870745636",
+            "photo_image_url": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.84726-6/712099106_1542942887412301_4390874689890170377_n.jpg?stp=c107.0.425.425a_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=92e707&_nc_ohc=k7xvTRcfopgQ7kNvwHhT7Au&_nc_oc=Adq_ZIVED3CPVHlttjfI_m26Toiy8HD_HGTBYcW6civX4W6GCtIc3uvqITI-Vl-mwjA&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af_bdnbXxJPAwQUoLNNBaJAT3SMWyB6zb4vfaS5NVH7q6Q&oe=6A276542"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK7,900",
+            "amount_with_offset_in_currency": "83563",
+            "amount": "7900.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Billesholm",
+              "state": "M",
+              "city_page": {
+                "display_name": "Billesholm",
+                "id": "113007395379528"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1468271819871448",
+          "marketplace_listing_title": "2 sovrum 1 badrum Lägenhet",
+          "custom_title": "2 beds · 1 bath",
+          "custom_sub_titles_with_rendering_flags": [
+            {
+              "subtitle": "Billesholm, M"
+            }
+          ],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/1558983558638836",
+          "id": "1558983558638836",
+          "primary_listing_photo": {
+            "__typename": "CatalogMarketplaceEnhancementTransformedImage",
+            "id": "25503574839337055",
+            "photo_image_url": "https://scontent-ord5-3.xx.fbcdn.net/v/t39.84726-6/615565863_25503574856003720_5291039121698067804_n.jpg?stp=c90.0.540.540a_dst-jpg_p180x540_tt6&_nc_cat=107&ccb=1-7&_nc_sid=92e707&_nc_ohc=r7RYDSFZi2cQ7kNvwGJBztA&_nc_oc=AdoRbul-VxAUEj3Nh0UJem8s4RilFHOSO6KL2rnMnnF9YjGrmkn6zgF9d9NlqqF0Ggw&_nc_zt=14&_nc_ht=scontent-ord5-3.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af9HDm4VfaI6Va7hFrRajRq4YRqHxDexgtYvZ0Tymolkxw&oe=6A276B77"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK3,650",
+            "amount_with_offset_in_currency": "38608",
+            "amount": "3650.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Sätofta",
+              "state": "M",
+              "city_page": {
+                "display_name": "Sätofta",
+                "id": "114128955264294"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1468271819871448",
+          "marketplace_listing_title": "1 sovrum 1 badrum Lägenhet",
+          "custom_title": "1 bed · 1 bath",
+          "custom_sub_titles_with_rendering_flags": [
+            {
+              "subtitle": "Höör"
+            },
+            {
+              "subtitle": "Sätofta, M"
+            }
+          ],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/1492590045794265",
+          "id": "1492590045794265",
+          "primary_listing_photo": {
+            "__typename": "CatalogMarketplaceEnhancementTransformedImage",
+            "id": "994124399931817",
+            "photo_image_url": "https://scontent-ord5-3.xx.fbcdn.net/v/t39.84726-6/706277462_994124409931816_477616551532306003_n.jpg?stp=c0.87.526.526a_dst-jpg_p526x395_tt6&_nc_cat=109&ccb=1-7&_nc_sid=92e707&_nc_ohc=fHxgouZf9IcQ7kNvwGzjwSN&_nc_oc=Adp9nnDaeF4Nnv8ma2tld_uBdlXKxxJ3E9tMKoBAe4E6sIWWXW7OGPBqD8JgZORb_yA&_nc_zt=14&_nc_ht=scontent-ord5-3.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af8aKAUkTT54dtevT33idMV4iskmcVmm22G-DISpaxMMXg&oe=6A2778DA"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK3,000",
+            "amount_with_offset_in_currency": "31733",
+            "amount": "3000.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Vollsjö",
+              "state": "M",
+              "city_page": {
+                "display_name": "Vollsjö",
+                "id": "107957322557765"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1468271819871448",
+          "marketplace_listing_title": "Lokal på Vollsjö Torg",
+          "custom_title": "Lokal på Vollsjö Torg",
+          "custom_sub_titles_with_rendering_flags": [
+            {
+              "subtitle": "Vollsjö, M"
+            }
+          ],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/1363319375850624",
+          "id": "1363319375850624",
+          "primary_listing_photo": {
+            "__typename": "CatalogMarketplaceEnhancementTransformedImage",
+            "id": "2202244143877183",
+            "photo_image_url": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.84726-6/710557142_2202244153877182_5608439268485148302_n.jpg?stp=c87.0.540.540a_dst-jpg_p180x540_tt6&_nc_cat=106&ccb=1-7&_nc_sid=92e707&_nc_ohc=nmU2-clF1bIQ7kNvwHE_RD9&_nc_oc=AdpbtF9dDws9G6kdbAbUGW4DueYZ_aYCT2cqreBBmNZFAzaGpoYFO_kNUU-mfgx9zGk&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af8VCXzOzRo00suf5SH57e6m2et25RPVf_kwSKTgLOkWtw&oe=6A27994E"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK4,500",
+            "amount_with_offset_in_currency": "47599",
+            "amount": "4500.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Malmö",
+              "state": "M",
+              "city_page": {
+                "display_name": "Malmö, Sweden",
+                "id": "110837332277562"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1792291877663080",
+          "marketplace_listing_title": "Philips 65\" 4K Mini-LED TV med 4-sidig Ambilight (65PML9507",
+          "custom_title": null,
+          "custom_sub_titles_with_rendering_flags": [],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/844649828068045",
+          "id": "844649828068045",
+          "primary_listing_photo": {
+            "__typename": "Photo",
+            "id": "10164627517964571",
+            "photo_image_url": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.30808-6/713486657_10164752965354571_7492131066796818031_n.jpg?stp=c219.0.563.563a_dst-jpg_s563x563_tt6&_nc_cat=103&ccb=1-7&_nc_sid=454cf4&_nc_ohc=mZzNEMWftqkQ7kNvwEFRZwr&_nc_oc=AdrXzC6geBRbEBBoZ2H2s3rt4tLHVqr4JPCODVX10SODqGE14VH9Fif0Eru5wGqNIBY&_nc_zt=23&_nc_ht=scontent-ord5-2.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af8LrgdI5EziAvyIH4O_g3cmbt7ldTg3myw-7yY44XWGBw&oe=6A278814"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK7,900",
+            "amount_with_offset_in_currency": "83563",
+            "amount": "7900.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Klippan",
+              "state": "M",
+              "city_page": {
+                "display_name": "Klippan, Scania",
+                "id": "104050352963889"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1468271819871448",
+          "marketplace_listing_title": "3a lägenhet renovated för uthyrning Klippan/Åstorp/Perstorp/ Helsingborg",
+          "custom_title": "3a lägenhet renovated för uthyrning Klippan/Åstorp/Perstorp/ Helsingborg",
+          "custom_sub_titles_with_rendering_flags": [
+            {
+              "subtitle": "Klippan, M"
+            }
+          ],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/947754121630813",
+          "id": "947754121630813",
+          "primary_listing_photo": {
+            "__typename": "CatalogMarketplaceEnhancementTransformedImage",
+            "id": "2526873684413849",
+            "photo_image_url": "https://scontent-ord5-3.xx.fbcdn.net/v/t39.84726-6/709014420_2526873691080515_832256058271252514_n.jpg?stp=c0.183.526.526a_dst-jpg_p526x395_tt6&_nc_cat=109&ccb=1-7&_nc_sid=92e707&_nc_ohc=EtutWp-QyNUQ7kNvwFIzkUD&_nc_oc=AdrLj0kD7dheIHP6oFKGQInSarJvz5MfJZR72ygrvBhyBAjJD1b_kYGCQ1jbi3nywSI&_nc_zt=14&_nc_ht=scontent-ord5-3.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af9sB9TIdhjWFFnm7K40JigwquHG2rdU2kOB81ue2Vr91Q&oe=6A278BD0"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK5,000",
+            "amount_with_offset_in_currency": "52888",
+            "amount": "5000.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Lund",
+              "state": "M",
+              "city_page": {
+                "display_name": "Lund, Sweden",
+                "id": "108679122496232"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1583634935226685",
+          "marketplace_listing_title": "Lägenhet uthyres i Lund 16 juni–20 juli",
+          "custom_title": null,
+          "custom_sub_titles_with_rendering_flags": [],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      },
+      {
+        "json": {
+          "facebookUrl": "https://www.facebook.com/marketplace/108679122496232/propertyrentals?minPrice=3000&maxPrice=8000",
+          "listingUrl": "https://www.facebook.com/marketplace/item/1486113496556186",
+          "id": "1486113496556186",
+          "primary_listing_photo": {
+            "__typename": "Photo",
+            "id": "3610306862469645",
+            "photo_image_url": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.30808-6/701932757_3643370129163318_6318421015712052933_n.jpg?stp=c0.99.900.900a_dst-jpg_s565x565_tt6&_nc_cat=105&ccb=1-7&_nc_sid=454cf4&_nc_ohc=aG95wpd-m4AQ7kNvwF9QoKu&_nc_oc=Adr0wGgpxtUwox1ckpd8JvKxu3DJOi8w4oPY8GiC9BdigXctANLBIG9p8SVl80Ohi44&_nc_zt=23&_nc_ht=scontent-ord5-2.xx&_nc_gid=P6X6S1e-wu4-lah1rKagfA&_nc_ss=72289&oh=00_Af90ztth9K-sKPZcQS65XC2_0xWmEGNEjlJSC0lfY5Mk7g&oe=6A2783AE"
+          },
+          "listing_price": {
+            "formatted_amount": "SEK7,800",
+            "amount_with_offset_in_currency": "82505",
+            "amount": "7800.00"
+          },
+          "strikethrough_price": null,
+          "comparable_price": null,
+          "comparable_price_type": null,
+          "location": {
+            "reverse_geocode": {
+              "city": "Hörby",
+              "state": "M",
+              "city_page": {
+                "display_name": "Hörby",
+                "id": "107431925953355"
+              }
+            }
+          },
+          "is_hidden": false,
+          "is_live": true,
+          "is_pending": false,
+          "is_sold": false,
+          "is_viewer_seller": false,
+          "min_listing_price": null,
+          "max_listing_price": null,
+          "marketplace_listing_category_id": "1468271819871448",
+          "marketplace_listing_title": "Mysigt lägenhet",
+          "custom_title": "Mysigt lägenhet",
+          "custom_sub_titles_with_rendering_flags": [
+            {
+              "subtitle": "Hörby, M"
+            }
+          ],
+          "origin_group": null,
+          "listing_video": null,
+          "parent_listing": null,
+          "marketplace_listing_seller": null,
+          "delivery_types": [
+            "IN_PERSON"
+          ]
+        }
+      }
+    ],
+    "Append to sheet": [
+      {
+        "json": {
+          "Title": "Soffa och fåtölj",
+          "Listing URL": "https://www.facebook.com/marketplace/item/27326381823713104",
+          "Price": "SEK4,000",
+          "Location": "Helsingborg, Sweden",
+          "Photo URL": "https://scontent-iad3-1.xx.fbcdn.net/v/t39.84726-6/719649781_1703800867287869_5730632555688611440_n.jpg?stp=c0.43.261.261a_dst-jpg_p261x260_tt6&_nc_cat=110&ccb=1-7&_nc_sid=92e707&_nc_ohc=gPOVSomZylwQ7kNvwHbsSKu&_nc_oc=AdpgvkNPsRJmPs9WEfiZh3YcNb-Qa0SbEkQMT-dqWDliRzw95f-6MBj9w8EdpwFpy2k&_nc_zt=14&_nc_ht=scontent-iad3-1.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af8X8oDZi_lz2HWlKrtja29qWXz7xv7AkWwigBBb1Y8CaQ&oe=6A3AAEBD"
+        }
+      },
+      {
+        "json": {
+          "Title": "Soffor",
+          "Listing URL": "https://www.facebook.com/marketplace/item/1914826835857677",
+          "Price": "SEK3,000",
+          "Location": "Malmö, Sweden",
+          "Photo URL": "https://scontent-iad3-1.xx.fbcdn.net/v/t39.84726-6/718174238_1562073432147394_2785912855181553788_n.jpg?stp=c0.43.261.261a_dst-jpg_p261x260_tt6&_nc_cat=110&ccb=1-7&_nc_sid=92e707&_nc_ohc=L3t_KSmsMdAQ7kNvwGVN5uS&_nc_oc=AdrhzSqFte5GCjHV8IReJtOc3XUOYMWpJzQHXM4fJWN1uXcRqNZ6KHVs53C4gwl37eg&_nc_zt=14&_nc_ht=scontent-iad3-1.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af9d-QCoNnzuS-zPqmkC9LutWMTn4DmiUAweWbbHalMhfQ&oe=6A3AA10F"
+        }
+      },
+      {
+        "json": {
+          "Title": "Matbord / svart matbord / ovalt matbord",
+          "Listing URL": "https://www.facebook.com/marketplace/item/26937395085925888",
+          "Price": "SEK4,000",
+          "Location": "Malmö, Sweden",
+          "Photo URL": "https://scontent-iad3-2.xx.fbcdn.net/v/t39.84726-6/701810665_2126558924790584_2540897482366219251_n.jpg?stp=c0.86.261.261a_dst-jpg_p261x260_tt6&_nc_cat=103&ccb=1-7&_nc_sid=92e707&_nc_ohc=KBmhRpiUdGAQ7kNvwG8Z2NQ&_nc_oc=AdoNX_j14Hjm86ukOdK8qzm2UN6ecupSFurxX2dlKhd_7afssTbBIHrJSOEe6_ug1ZY&_nc_zt=14&_nc_ht=scontent-iad3-2.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af8EZWY8S0aYc7roElI1wsEXt_CUlJYEV2tPGleAp7eI2A&oe=6A3AACDF"
+        }
+      },
+      {
+        "json": {
+          "Title": "Charmig 30-tals stuga centralt i Höllviken",
+          "Listing URL": "https://www.facebook.com/marketplace/item/1556462958655602",
+          "Price": "SEK7,000",
+          "Location": "Höllviken",
+          "Photo URL": "https://scontent-iad3-2.xx.fbcdn.net/v/t39.84726-6/568173681_1804738666914661_1860863117386120046_n.jpg?stp=c0.101.261.261a_dst-jpg_p261x260_tt6&_nc_cat=105&ccb=1-7&_nc_sid=92e707&_nc_ohc=TJDjMfvLOioQ7kNvwE79IjU&_nc_oc=AdqX3_au4ZRFQg6aKKQ7bPLpaulV-g4z9_UVpgzcaDVgVbEJOv5IQCKDV5_0BdBYNFY&_nc_zt=14&_nc_ht=scontent-iad3-2.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af8Iym0jy514_103kRLtHfdnHWlKoFU4S2AMe4buGHUMgw&oe=6A3A9CC9"
+        }
+      },
+      {
+        "json": {
+          "Title": "Samtalsrum/ kontor uthyres i centrala Lund",
+          "Listing URL": "https://www.facebook.com/marketplace/item/2095582707858046",
+          "Price": "SEK5,900",
+          "Location": "Lund, Sweden",
+          "Photo URL": "https://scontent-iad3-1.xx.fbcdn.net/v/t39.30808-6/642281473_10164884113556972_8916215378671556754_n.jpg?stp=c139.0.747.747a_dst-jpg_tt6&cstp=mx747x747&ctp=s261x260&_nc_cat=108&ccb=1-7&_nc_sid=454cf4&_nc_ohc=g_sLl2LsC_EQ7kNvwFBGyQ7&_nc_oc=AdpKw_dCHfp5bdqlosBczMv6XfOzbOxmxkKCsenTrsi_AsQLR4-uBexl4DxHhzjDZHA&_nc_zt=23&_nc_ht=scontent-iad3-1.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af9q5pwfAJixPPWTf83eOjGfk4_c3OAgbG3-zei0CxjFVQ&oe=6A3A9343"
+        }
+      },
+      {
+        "json": {
+          "Title": "bostad / rum med egen ingång o eget badrum",
+          "Listing URL": "https://www.facebook.com/marketplace/item/1010581138087166",
+          "Price": "SEK5,000",
+          "Location": "Lund, Sweden",
+          "Photo URL": "https://scontent-iad3-1.xx.fbcdn.net/v/t39.84726-6/703720320_1884275315752692_2913245431974402440_n.jpg?stp=c0.43.261.261a_dst-jpg_p261x260_tt6&_nc_cat=104&ccb=1-7&_nc_sid=92e707&_nc_ohc=MpZHN52H2_sQ7kNvwHHmjC1&_nc_oc=AdqWPCSsIK4Qo7smywQAKHtH52GIK74VvM6jQnf3ySfho5zOILrAhJu1Jt0uIq4R2Hc&_nc_zt=14&_nc_ht=scontent-iad3-1.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af8O3cEu-Vji37_xqOS3TQQ22cdErD5mF8BV6kGtsw64qQ&oe=6A3AB1EB"
+        }
+      },
+      {
+        "json": {
+          "Title": "Källarlägenhet",
+          "Listing URL": "https://www.facebook.com/marketplace/item/973390072132238",
+          "Price": "SEK6,000",
+          "Location": "Helsingborg, Sweden",
+          "Photo URL": "https://scontent-iad6-1.xx.fbcdn.net/v/t39.30808-6/722953433_10239754589939612_321255645769162035_n.jpg?stp=c126.0.756.756a_dst-jpg_tt6&cstp=mx756x756&ctp=s261x260&_nc_cat=100&ccb=1-7&_nc_sid=454cf4&_nc_ohc=CK36YmRRWjQQ7kNvwEo_-0H&_nc_oc=AdrUbyYMG_ElkwctaVXS5XzhExAbg1amoX5uHr25LjxTa7sawk9IiIFmiMQXH5sCLHs&_nc_zt=23&_nc_ht=scontent-iad6-1.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af-EWG-dBtzYyyVEHSqcPLUXWmvFY_-4cATliY93cqSOow&oe=6A3A9B2E"
+        }
+      },
+      {
+        "json": {
+          "Title": "Behandlingsrum uthyres i Davidshall",
+          "Listing URL": "https://www.facebook.com/marketplace/item/3274293472743026",
+          "Price": "SEK6,000",
+          "Location": "Malmö, Sweden",
+          "Photo URL": "https://scontent-iad3-1.xx.fbcdn.net/v/t39.84726-6/697129117_2014233392496506_6195599837559878071_n.jpg?stp=c0.43.261.261a_dst-jpg_p261x260_tt6&_nc_cat=101&ccb=1-7&_nc_sid=92e707&_nc_ohc=e4rep9YspRgQ7kNvwGrdbP9&_nc_oc=AdqObzsEOxHJFycX4S7mzM_O6-ooxk1SykClZNhxJBNF60rl19O__IDXbGDTr5gAG3o&_nc_zt=14&_nc_ht=scontent-iad3-1.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af8Xra1KQdz3mapNwvsXygMgdOLq2OiRzfWSwEHt_vKLqA&oe=6A3ABCD0"
+        }
+      },
+      {
+        "json": {
+          "Title": "IKEA komplett säng 180x200 cm",
+          "Listing URL": "https://www.facebook.com/marketplace/item/4363685813884940",
+          "Price": "SEK4,600",
+          "Location": "Blentarp",
+          "Photo URL": "https://scontent-iad3-1.xx.fbcdn.net/v/t39.84726-6/721309420_2045910386355288_5487678092979904994_n.jpg?stp=c0.43.261.261a_dst-jpg_p261x260_tt6&_nc_cat=101&ccb=1-7&_nc_sid=92e707&_nc_ohc=58U2ScN6718Q7kNvwGwrKMy&_nc_oc=AdrEpugeibDjfIAWZAXq4U7jIxnLOVVcclAdY4_Pty0Q-Ap-581BCI6en8uHQAgEmAI&_nc_zt=14&_nc_ht=scontent-iad3-1.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af854J0Xz1XkreJeAoIMsjMktX4Jyg3qtAAp155J4wiHHw&oe=6A3AB653"
+        }
+      },
+      {
+        "json": {
+          "Title": "3 sovrum 1 badrum Lägenhet",
+          "Listing URL": "https://www.facebook.com/marketplace/item/2355347574964179",
+          "Price": "SEK5,300",
+          "Location": "Malmö, Sweden",
+          "Photo URL": "https://scontent-iad6-1.xx.fbcdn.net/v/t39.84726-6/686201758_976808455102169_7766131725748767983_n.jpg?stp=c0.0.261.261a_dst-jpg_p261x260_tt6&_nc_cat=102&ccb=1-7&_nc_sid=92e707&_nc_ohc=AeA8bTyc_FQQ7kNvwGLar5Z&_nc_oc=AdrxEFEgfmGpPYe9q_FymFJACGkYg2JuAVPTbRYzAZNoFwidYWl5ltquJJcmttT0jOE&_nc_zt=14&_nc_ht=scontent-iad6-1.xx&_nc_gid=Mfd8x3KyieGzCVqO5m55hw&_nc_ss=72289&oh=00_Af9KIKTeLnlLZ1cD0gFqwVSXSTEXtXsf4ChmjFEMYv8Aeg&oe=6A3A9718"
+        }
+      }
+    ],
+    "Get user list": [
+      {
+        "json": {
+          "row_number": 2,
+          "Chat ID": 936703196,
+          "Username": "dpeterpaat",
+          "First Name": "Dicsy",
+          "Last Name": "Peter",
+          "Date": "2026-06-18T19:59:55.000+07:00"
+        }
+      },
+      {
+        "json": {
+          "row_number": 3,
+          "Chat ID": 936703195,
+          "Username": "dpeterpaat",
+          "First Name": "Dicsy",
+          "Last Name": "Peter",
+          "Date": "2026-06-18T23:49:37.000+07:00"
+        }
+      }
+    ],
+    "Get user list1": [
+      {
+        "json": {
+          "row_number": 2,
+          "Chat ID": 936703196,
+          "Username": "dpeterpaat",
+          "First Name": "Dicsy",
+          "Last Name": "Peter",
+          "Date": "2026-06-18T19:59:55.000+07:00"
+        }
+      },
+      {
+        "json": {
+          "row_number": 3,
+          "Chat ID": 936703196,
+          "Username": "dpeterpaat",
+          "First Name": "Dicsy",
+          "Last Name": "Peter",
+          "Date": "2026-06-18T23:49:37.000+07:00"
+        }
+      }
+    ],
+    "AI Agent": [
+      {
+        "json": {
+          "output": {
+            "id": "1010581138087166",
+            "marketplace_listing_title": "bostad / rum med egen ingång o eget badrum",
+            "listing_price": "SEK5,000",
+            "location": "Lund, Sweden",
+            "listingUrl": "https://www.facebook.com/marketplace/item/1010581138087166"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Facebook Marketplace Listing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Facebook Marketplace Listing": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if there is id on item": {
+      "main": [
+        [
+          {
+            "node": "Compare to get CDN",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit to append to sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get user list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Compare to get CDN",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Edit to message": {
+      "main": [
+        [
+          {
+            "node": "Get user list1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "if there is id on item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare to get CDN": {
+      "main": [
+        [],
+        [],
+        [
+          {
+            "node": "Edit to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Users": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait 3 sec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit to append to sheet": {
+      "main": [
+        [
+          {
+            "node": "Append to sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send the top picks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 sec": {
+      "main": [
+        [
+          {
+            "node": "Send there is no new list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send the top picks": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get user list": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send there is no new list": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get user list1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "kppRNciy5y3LT6n0",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "621986b8-155c-4ec0-b843-aa67caaa76a2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "07ffabd755c275b67e1f5df2dea2381d993c8281e88441a61557732a2f1f3ff6"
+  },
+  "nodeGroups": [],
+  "id": "EiSmy1zuzKVrPhHE",
+  "tags": []
+}

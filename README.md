@@ -15,9 +15,9 @@ Send a message to the Telegram bot to start receiving daily picks:
 | Command | Action |
 |---|---|
 | `/getdailyhousingpicks` | Subscribe to daily picks |
-| `removemyself` | Remove yourself from the list |
+| `/removemyself` | Remove yourself from the list |
 
-👉 **Bot link:** t.me/termonsterbot
+👉 **Bot link:** [t.me/termonsterbot](t.me/termonsterbot)
 
 Once subscribed, you will receive one curated property listing per day, sent as a photo with details.
 
